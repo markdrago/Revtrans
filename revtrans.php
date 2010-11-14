@@ -43,6 +43,8 @@ include( "classes/reader/revelation_crypto.php" );
 include( "classes/writer.php" );
 include( "classes/writer/secrets_csv/entry.php" );
 include( "classes/writer/secrets_csv.php" );
+include( "classes/writer/lastpass_csv/entry.php" );
+include( "classes/writer/lastpass_csv.php" );
 
 echo "RevTrans - Revelation Password File Transformer\n";
 echo "Copyright 2010 Jakob Westhoff\n";
@@ -53,6 +55,7 @@ $options = getopt(
     "h",
     array(
         "input-format:",
+        "out-format:",
         "password:",
         "output:",
         "help"
@@ -77,12 +80,13 @@ Usage:
 
 
 Options:
-  --input-format=<plain,encrypted>  Input format to read (Default: encrypted)
-  --password=<password>             Password to use for decryption. It is 
-                                    discouraged to supply a password on the 
-                                    commandline. You will be asked for one if
-                                    necessary.
-  --output=<file>                   Write output to a file instead of stdout.
+  --input-format=<plain,encrypted>   Input format to read (Default: encrypted)
+  --out-format=<secrets,lastpass>    Output format to write (Default: secrets)
+  --password=<password>              Password to use for decryption. It is 
+                                     discouraged to supply a password on the 
+                                     commandline. You will be asked for one if
+                                     necessary.
+  --output=<file>                    Write output to a file instead of stdout.
 
 USAGE;
 
@@ -97,6 +101,10 @@ if ( !isset( $options['input-format'] ) )
 if ( !isset( $options['output'] ) )
 {
     $options['output'] = "php://stdout";
+}
+if ( !isset( $options['out-format'] ) )
+{
+    $options['out-format'] = "secrets";
 }
 
 // Maybe a password input is needed
@@ -125,7 +133,16 @@ try
     }
 
     $passwords = $reader->load();
-    $writer = new Writer\SecrectsCsv( $passwords );
+    
+    switch( $options["out-format"] )
+    {
+        case "secrets":
+            $writer = new Writer\SecrectsCsv( $passwords );
+        break;
+        case "lastpass":
+            $writer = new Writer\LastPassCsv( $passwords );
+        break;
+    }
     $writer->save( $options["output"] );
 }
 catch( \Exception $e ) 
